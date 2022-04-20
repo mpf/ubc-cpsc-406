@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="/ubc-cpsc-406/libs/katex/katex.min.css">
+     
+  
+     <link rel="stylesheet" href="/ubc-cpsc-406/libs/highlight/github.min.css">
+
+     <script src="/ubc-cpsc-406/libs/clipboard.min.js"></script>
+  
+    <link rel="stylesheet" href="/ubc-cpsc-406/css/jtd.css">
+  <link rel="icon" href="/ubc-cpsc-406/assets/favicon.ico">
+
+   <title>QR Factorization</title>  
+</head>
+<body>                      <!-- closed in foot.html -->
+<div class="page-wrap">   <!-- closed in foot.html -->
+  <!-- SIDE BAR -->
+  <div class="side-bar">
+    <div class="header">
+      <a href="/ubc-cpsc-406/" class="title">
+        CPSC 406 
+      </a>
+    </div>
+    <label for="show-menu" class="show-menu">MENU</label>
+    <input type="checkbox" id="show-menu" role="button">
+    <div class="menu" id="side-menu">
+      <ul class="menu-list">
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/" class="menu-list-link">Home</a>
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/grades/" class="menu-list-link">Grades</a>
+        <li class="menu-list-parent active"><a href="/ubc-cpsc-406/notes/" class="menu-list-link">Schedule</a>
+          <!-- <ul class="menu-list-child-list ">
+            <li class="menu-list-item {{ispage notes/least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/least-squares" class="menu-list-link">Least-squares</a>
+            <li class="menu-list-item {{ispage notes/qr-factorization}}active{{end}}"><a href="/ubc-cpsc-406/notes/qr-factorization" class="menu-list-link">QR</a>
+            <li class="menu-list-item {{ispage notes/regularized-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/regularized-least-squares" class="menu-list-link">Regularization</a>
+            <li class="menu-list-item {{ispage notes/gradients}}active{{end}}"><a href="/ubc-cpsc-406/notes/gradients" class="menu-list-link">Gradients</a>
+            <li class="menu-list-item {{ispage notes/nonlinear-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/nonlinear-least-squares" class="menu-list-link">Nonlinear least squares</a>
+          </ul>  -->
+      </ul>
+    </div>
+    <div class="footer">
+      <!-- This is <em>Just the docs</em>, adapted from the <a href="https://github.com/pmarsceill/just-the-docs" target="_blank">Jekyll theme</a>. -->
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="main-content-wrap"> <!-- closed in foot.html -->
+    <div class="main-content">    <!-- closed in foot.html -->
+      <div class="main-header">
+        <a name="pagetop"></a>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406/blob/main/notes/qr-factorization.md">Page source</a>
+		    <span style="width:30px; text-align: center;color:lightgray;">|</span>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406">GitHub repo</a>
+      </div>
+
+
+
+<!-- Content appended here (in class franklin-content) -->
+<div class="franklin-content"><h1 id="qr_factorization"><a href="#qr_factorization" class="header-anchor">QR Factorization</a></h1>
+
+    <span style="font-size:24px;font-weight:300;">The QR factorization of a matrix constructs an orthgonal basis for its columnspace. It's also one of the best computational tools for solving least-squares problems.</span>
+    
+
+<h3 id="required_reading"><a href="#required_reading" class="header-anchor">Required Reading</a></h3>
+<ul>
+<li><p><a href="https://ubcmath.github.io/MATH307/orthogonality/projection.html">Orthogonal projection</a> and <a href="https://ubcmath.github.io/MATH307/orthogonality/qr.html">QR decomposition</a> of UBC Math 307 <a href="https://ubcmath.github.io/MATH307">lecture notes</a></p>
+</li>
+</ul>
+<div class="note"><div class="title">⚠ Note</div>
+<div class="content"><p>This page uses the <code>LinearAlgebra</code> package, which contains <code>norm</code> and <code>qr</code>.</p>
+<pre><code class="language-julia">using LinearAlgebra</code></pre></div></div>
+<h2 id="orthogonal_and_orthonormal_vectors"><a href="#orthogonal_and_orthonormal_vectors" class="header-anchor">Orthogonal and orthonormal vectors</a></h2>
+<p>For any two \(n\)-vectors \(x\) and \(y\), the cosine identity</p>
+<div class="nonumber">\[
+  x^T\! y = \|x\|\|y\|\cos(\theta)
+\]</div>
+<p>relates the inner product of the vectors to the the angle between them. Thus, the vectors \(x\) and \(y\) are <strong>orthogonal</strong> when</p>
+<div class="nonumber">\[
+	x^T\! y = 0, \quad\text{or equivalently,}\quad \cos(\theta) = 0.
+\]</div>
+<p>Orthogonal vectors are <strong>orthonormal</strong> when they&#39;re also normalized:</p>
+<div class="nonumber">\[
+	x^T\! y = 0, \quad \| x\|=1, \quad \| y\|=1.
+\]</div>
+<p>These definitions extend readily to a collection of vectors: the set of \(k\) vectors \(\{x_1,\ldots,x_k\}\) in \(\mathbb R^n\) is orthogonal &#40;and orthonormal&#41; whenever</p>
+<div class="nonumber">\[
+	x_i^T\! x_j = 0 \quad\text{for all}\quad i\ne j
+\qquad (\text{and}\ \| x_i\| = 1)
+\]</div>
+<p>The 2-dimensional canonical unit vectors \(e_1 = (1,0)\) and \(e_2 = (0,1)\) are orthonormal:</p>
+<pre><code class="language-julia">e₁ &#61; &#91;1, 0&#93;;  e₂ &#61; &#91;0, 1&#93;
+@show e₁&#39;e₂
+@show norm&#40;e₁&#41;
+@show norm&#40;e₂&#41;</code></pre><pre><code class="plaintext code-output">e₁' * e₂ = 0
+norm(e₁) = 1.0
+norm(e₂) = 1.0
+</code></pre>
+<h2 id="orthogonal_matrices"><a href="#orthogonal_matrices" class="header-anchor">Orthogonal matrices</a></h2>
+<p>A square \(n\)-by-\(n\) matrix \(Q\) is <strong>orthogonal</strong> when its columns are orthonormal:</p>
+<div class="nonumber">\[
+   Q = \begin{bmatrix} q_1 & q_2 & \cdots & q_n \end{bmatrix}
+   \quad\text{and}\quad
+   Q^T\! Q = QQ^T\! = I.
+\]</div>
+<p>Because a matrix \(B\) is the inverse of a matrix \(A\) if and only if \(BA =AB = I\), the inverse of an  orthogonal matrix is its transpose:</p>
+<div class="nonumber">\[
+Q^{-1} = Q^T\!.
+\]</div>
+<p>An orthogonal matrix rotates a vector, but doesn&#39;t change its length. Thus inner products are invariant under orthogonal transformations, i.e., for any vectors \(x\) and \(y\),</p>
+<div class="nonumber">\[
+(Qx)^T\!(Qy) = x^T\! Q^T\! Qy = x^T\! y,
+\]</div>
+<p>and so</p>
+<div class="nonumber">\[
+  \| Q  x \|_2 = \sqrt{(Qx)^T\! (Qx)} = \sqrt{x^T\! x} = \| x \|_2.
+\]</div>
+<p>Another property of orthogonal matrices is that their determinant is either \(1\) or \(-1\). This can be observed from the fact that for any compatible matrices \( A \) and \( B \), \(\det( A  B ) = \det( A )\det( B )\) and \(\det( A )= \det( A^T )\). Hence, </p>
+<div class="nonumber">\[
+\det( Q ^T\!  Q ) = \det( I ) \iff \det( Q )^2 = 1 \iff \det( Q ) = ±1.
+\]</div>
+<h2 id="qr_factorization__2"><a href="#qr_factorization__2" class="header-anchor">QR Factorization</a></h2>
+<p>Every \(m\)-by-\(n\) matrix \(A\) has a <strong>QR factorization</strong>, which means it can be decomposed as the product</p>
+<div class="nonumber">\[
+  A  =  Q   R, 
+\]</div>
+<p>where</p>
+<div class="nonumber">\[
+  Q = \begin{bmatrix} q_1 & \cdots & q_m \end{bmatrix}
+  \quad\text{ and}\quad
+  R = \begin{bmatrix} r_{11} & r_{12} & \cdots & r_{1n}
+		   \\      0 & r_{22} & \cdots & r_{2n}
+		   \\ \vdots &        & \ddots & \vdots
+		   \\     0  &     0  & \cdots & r_{mn}
+  \end{bmatrix},
+\]</div>
+<p>respectively, are an \(m\)-by-\(m\) orthogonal matrix and an \(m\)-by-\(n\) upper-triangular matrix. This factorization isn&#39;t unique, unless we impose additional conditions on the factors \(Q\) and \(R\).</p>
+<p><a href="https://en.wikipedia.org/wiki/Householder_transformation">Householder reflectors</a> and <a href="https://en.wikipedia.org/wiki/Givens_rotation">Givens rotations</a> are the preferred methods for computing the QR factorization. These methods require \(\Omicron(m^2n)\) flops to complete.</p>
+<p>The columns of the orthogonal matrix \(Q\) reveal an orthogonal basis for the range of \(A,\) and so triangularity of \(R\) gives a simple &quot;recipe&quot; for reconstructing the columns of \(A=[a_1,\ldots,a_n]\) from those of \(Q\):</p>
+<div class="nonumber">\[\begin{aligned}
+   a_1 &= r_{11} q_1
+\\ a_2 &= r_{12} q_1 + r_{22} q_2
+\\ a_3 &= r_{13} q_1 + r_{23} q_2 + r_{33} q_3
+\\     &\ \ \vdots
+\\ a_n &= r_{1n} q_1 + r_{2n} q_2 + \cdots + r_{nn} q_n.
+\end{aligned}\]</div>
+<p>From these formulas we deduce a key property of this factorization: for any index \(k < n\), the span of the leading \(k\) columns of \(Q\) contain the span of the leading \(k\) columns of \(A\), i.e.,</p>
+<div class="nonumber">\[
+  \hbox{span}\{a_1,\ldots,a_k\} \subseteq \hbox{span}\{q_1,\ldots,q_k\}.
+\]</div>
+<p>If we further assume that \(A\) has full column rank, this inclusion tightens to an equality, which tells us that leading \(k\) columns of \(Q\) provide a tight basis for the corresponding columns.</p>
+<div class="theorem"><strong>Theorem</strong>: &#40;<strong>QR factorization for full column rank matrices</strong>&#41;  If \(A=QR\) is the QR factorization of an \(m\)-by-\(n\) matrix \(A\) with full column rank, then the first \(n\) columns of \(Q\) form a basis for the range of \(A\) and the remaining \(m-n\) columns form a basis for its orthogonal complement: <div class="nonumber">\[\begin{aligned}
+  \hbox{range}(A) &= \hbox{range}(Q_1) \quad \text{where}\quad Q_1 = \begin{bmatrix}q_1 & \cdots & q_n\end{bmatrix},
+\\\hbox{range}(A)^\perp=\hbox{null}(A^T) &= \hbox{range}(Q_2) \quad \text{where}\quad Q_2 = \begin{bmatrix}q_{n+1} & \cdots & q_m\end{bmatrix},
+\end{aligned}\]</div> and for \(k=1,\ldots,n\), <div class="nonumber">\[
+   \hbox{span}\{a_1,\ldots,a_k\} = \hbox{span}\{q_1,\ldots,q_k\}
+\]</div> where the diagonal elements \(r_{kk}\ne 0.\)</div>
+<p>This theorem tells us that a full column rank matrix can then be decomposed as</p>
+<a id="eqqr-fact" class="anchor"></a>\[ 
+  A = Q R
+    = \begin{bmatrix}Q_1 & Q_2\end{bmatrix}
+      \begin{bmatrix}R_1 \\ 0 \end{bmatrix}
+    = Q_1 R_1,
+\]
+<p>where the triangular submatrix \(R_1 = R[1{:}n,1{:}n]\) has no zeros on its diagonal. The factorization \(A = Q_1 R_1\) is the <em>thin</em> or <em>economy</em> QR.</p>
+<p>In Julia, we can compute the full QR decomposition of a matrix using via</p>
+<pre><code class="language-julia">m, n &#61; 4, 3
+A &#61; randn&#40;m,n&#41;
+Q, R &#61; qr&#40;A&#41;</code></pre><pre><code class="plaintext code-output">LinearAlgebra.QRCompactWY{Float64, Matrix{Float64}}
+Q factor:
+4×4 LinearAlgebra.QRCompactWYQ{Float64, Matrix{Float64}}:
+ -0.589037   -0.609377    0.391674   0.35817
+  0.594233   -0.0982621   0.0108708  0.798194
+ -0.547289    0.568937   -0.37926    0.482646
+  0.0199064   0.543429    0.838233   0.0406633
+R factor:
+3×3 Matrix{Float64}:
+ -1.64787  -1.95628   1.26521
+  0.0       2.8769   -0.0479272
+  0.0       0.0       1.30317</code></pre>
+<p>and we can verify the orthogonality of <code>Q</code>:</p>
+<pre><code class="language-julia">@show norm&#40;Q&#39;*Q - I&#41;
+@show norm&#40;Q*Q&#39; - I&#41;</code></pre><pre><code class="plaintext code-output">norm(Q' * Q - I) = 3.764481094073603e-16
+norm(Q * Q' - I) = 3.2653376019354926e-16
+</code></pre>
+<p>Julia <a href="https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.QRCompactWY">stores</a> the factor <code>Q</code> as a series of <a href="https://en.wikipedia.org/wiki/Householder_transformation#QR_decomposition">Householder reflectors</a>.</p>
+<h3 id="thin_qr"><a href="#thin_qr" class="header-anchor">Thin QR</a></h3>
+<p>To extract the &quot;thin&quot; QR factorization from <code>qr</code>, use the <code>Matrix</code> conversion function:</p>
+<pre><code class="language-julia">F &#61; qr&#40;A&#41;
+Q₁ &#61; Matrix&#40;F.Q&#41;
+R₁ &#61; F.R
+@show size&#40;Q₁&#41;
+@show size&#40;R₁&#41;
+@show norm&#40;A - Q₁*R₁&#41;</code></pre><pre><code class="plaintext code-output">size(Q₁) = (4, 3)
+size(R₁) = (3, 3)
+norm(A - Q₁ * R₁) = 7.855367300016406e-16
+</code></pre>
+<h2 id="solving_least_squares_via_qr"><a href="#solving_least_squares_via_qr" class="header-anchor">Solving least squares via QR</a></h2>
+<p>The QR factorization can be used to solve the least squares problem</p>
+<a id="eqleast-squares" class="anchor"></a>\[ 
+  \min_{x\in\mathbb R^n}\ \| A  x -b\|^2.
+\]
+<p>Assume throughout this section that \(A\) has full columns rank, and hence \(m\geq n\). &#40;The QR factorization also can be used to solve the more general problem, but we don&#39;t consider that case here.&#41; Let \(A = QR\) be the QR factorization shown in <span class="eqref">(<a href="#eqqr-fact">1</a>)</span>. Because the 2-norm is invariant under orthogonal rotation,</p>
+<a id="eqls-derivation" class="anchor"></a>\[\begin{aligned} 
+\|Ax -b\|^2
+& = \| Q ^T\! ( Ax -b)\|^2\\
+&=\left\|\begin{bmatrix} R_1\\0\end{bmatrix} x -\begin{bmatrix} Q_1^T\\Q_2^T\end{bmatrix}b\right\|^2\\
+& = \|R_1x  - Q_1^T b\|^2+\|Q_2^T b\|^2.
+\end{aligned}\]
+<p>Hence, minimizing \(\|R_1 x - Q_1^T b\|\) also minimizes \(\|Ax-b\|\). Because \( A \) is full rank, \(R_1\) is nonsingular, and the least-squares solution is obtained as the unique solution of the system </p>
+<a id="eqls-via-qr" class="anchor"></a>\[ 
+  R_1 x  = Q_1^T b.
+\]
+<p>The procedure for solving least-squares problems via the QR factorization can then be summarized as follows:</p>
+<div class="theorem"><p><strong>Algorithm</strong>: &#40;<em>Least-squares via QR</em>&#41; <br/> </p>
+<ul>
+<li><p>compute the thin QR factorization \(A = Q_1 R_1\)</p>
+</li>
+<li><p>backsolve the triangular linear system \(R_1 x = Q_1^T b\)</p>
+</li>
+</ul></div>
+<p>Here&#39;s a simple random example in Julia:</p>
+<pre><code class="language-julia">m, n &#61; 4, 3
+A &#61; randn&#40;m, n&#41;
+b &#61; randn&#40;m&#41;
+F &#61; qr&#40;A&#41;
+Q₁, R₁ &#61; Matrix&#40;F.Q&#41;, F.R
+x &#61; R₁ \ Q₁&#39;b   # &lt;--- do NOT be tempted to use x &#61; inv&#40;R₁&#41;*Q₁&#39;b</code></pre>
+<p>and we can verify that <code>x</code> is the least-squares solution by verifying that the residual \(r=b-Ax\) is orthogonal to the columns of \(A\): </p>
+<pre><code class="language-julia">r &#61; b - A*x
+@show norm&#40;A&#39;r&#41;</code></pre><pre><code class="plaintext code-output">norm(A' * r) = 3.820983142562135e-15
+</code></pre>
+<p>The last line of the derivation shown in <span class="eqref">(<a href="#eqls-derivation">3</a>)</span> asserts that the norm of the residual is equal to the norm of \(Q_2^T b\). Let&#39;s check:</p>
+<pre><code class="language-julia">Q₂ &#61; F.Q&#91;:,n&#43;1:end&#93;
+norm&#40;Q₂&#39;b&#41; ≈ norm&#40;r&#41;</code></pre><pre><code class="plaintext code-output">true</code></pre>
+<h2 id="accuracy_of_qr_versus_normal_equations"><a href="#accuracy_of_qr_versus_normal_equations" class="header-anchor">Accuracy of QR versus normal equations</a></h2>
+<p>A solution \(x^*\) of a full-rank least-squares problem <span class="eqref">(<a href="#eqleast-squares">2</a>)</span> can be obtained as the solution of the normal equations:</p>
+<div class="nonumber">\[
+  A^T\! A x = A^T\! b.
+\]</div>
+<p>This approach, however, can in some cases suffer from numerical instability, which means that floating-point computations used by most computers yield solutions with unacceptable errors. The QR approach, on the other hand, often allows us to solve a wider-range of problems. The next example, borrowed from the course on <a href="https://fncbook.github.io/fnc/leastsq/demos/normaleqns-instab.html">Fundamentals of Numerical Computation</a>, illustrates this point.</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Pythagorean_trigonometric_identity">Pythagorean identity</a> asserts that</p>
+<div class="nonumber">\[
+\sin^2(θ) + \cos^2(θ) = 1
+\]</div>
+<p>for all values of \(\theta\). This implies that the matrix</p>
+<div class="nonumber">\[
+  \begin{bmatrix} \sin^2(\theta_1) & \cos^2(\theta_1) & 1
+    \\ \vdots          & \vdots           & \vdots
+    \\\sin^2(\theta_m) & \cos^2(\theta_m) & 1\end{bmatrix},
+\]</div>
+<p>for any values \(\theta_1,\ldots,\theta_m\), doesn&#39;t have full column rank. Let&#39;s define a slightly perturbed version of this matrix that does have full column rank:</p>
+<pre><code class="language-julia">θ &#61; LinRange&#40;0,3,400&#41;
+ε &#61; 1e-7
+A &#61; @. &#91;sin&#40;θ&#41;^2   cos&#40;θ&#43;ε&#41;^2   θ^0&#93;</code></pre>
+<p>We can check that this matrix has full column rank:</p>
+<pre><code class="language-julia">rank&#40;A&#41; &#61;&#61; 3</code></pre><pre><code class="plaintext code-output">true</code></pre>
+<p>Now create a right-hand side that corresponds to a known solution <code>xᵉ</code>:</p>
+<pre><code class="language-julia">xᵉ &#61; &#91;1., 2., 1.&#93;
+b  &#61; A*xᵉ</code></pre>
+<h3 id="solution_via_the_normal_equations"><a href="#solution_via_the_normal_equations" class="header-anchor">Solution via the normal equations</a></h3>
+<p>Here&#39;s the solution obtained via the normal equations, and its corresponding relative error:</p>
+<pre><code class="language-julia">xⁿ &#61; A&#39;A \ A&#39;b
+eⁿ &#61; norm&#40;xᵉ - xⁿ&#41; / norm&#40;xᵉ&#41;
+@show xⁿ
+@show eⁿ</code></pre><pre><code class="plaintext code-output">xⁿ = [1.078947368368814, 2.0789473685816944, 0.9210526315789473]
+eⁿ = 0.05582421959290988
+</code></pre>
+<p>This solution has only about 1 digit of accuracy.</p>
+<h3 id="solution_via_qr_factorization"><a href="#solution_via_qr_factorization" class="header-anchor">Solution via QR factorization</a></h3>
+<p>Here&#39;s the solution obtained via the QR factorization, and its corresponding relative error:</p>
+<pre><code class="language-julia">Q, R &#61; qr&#40;A&#41;; Q &#61; Matrix&#40;Q&#41;
+xʳ &#61; R \ &#40;Q&#39;b&#41;
+eʳ &#61; norm&#40;xᵉ - xʳ&#41; / norm&#40;xᵉ&#41;
+@show xʳ
+@show eʳ</code></pre><pre><code class="plaintext code-output">xʳ = [1.000000003244045, 2.000000003244045, 0.9999999967559552]
+eʳ = 2.2938861886910773e-9
+</code></pre>
+<p>Clearly, this solution is much more accurate than that obtained via the normal equations. The cost is essentially the same, so there&#39;s no real downside to using QR. In general, we can use QR implicitly via the backslash operator, which organizes its computations in a slightly different way, and obtains even better accuracy:</p>
+<pre><code class="language-julia">xᵇ &#61; A \ b
+eᵇ &#61; norm&#40;xᵉ - xᵇ&#41; / norm&#40;xᵉ&#41;
+@show xᵇ
+@show eᵇ</code></pre><pre><code class="plaintext code-output">xᵇ = [0.9999999998320813, 1.9999999998320814, 1.0000000001679195]
+eᵇ = 1.187365935912076e-10
+</code></pre>
+
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Michael P. Friedlander | Last modified: April 20, 2022.
+  </br> Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div> <!-- end of class main-content -->
+    </div> <!-- end of class main-content-wrap -->
+    </div> <!-- end of class page-wrap-->
+    
+      <script src="/ubc-cpsc-406/libs/katex/katex.min.js"></script>
+<script src="/ubc-cpsc-406/libs/katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body)</script>
+
+    
+    
+      <script src="/ubc-cpsc-406/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+      <!-- http://tutsplus.github.io/clipboard/ -->
+
+<script>
+(function(){
+
+	// Get the elements.
+	// - the 'pre' element.
+	// - the 'div' with the 'paste-content' id.
+
+	var pre = document.getElementsByTagName('pre');
+
+	// Add a copy button in the 'pre' element.
+	// which only has the className of 'language-'.
+
+	for (var i = 0; i < pre.length; i++) {
+		var isLanguage = pre[i].children[0].className.indexOf('language-');
+
+		if ( isLanguage === 0 ) {
+			var button           = document.createElement('button');
+					button.className = 'copy-button';
+					button.textContent = 'Copy';
+
+					pre[i].appendChild(button);
+		}
+	};
+
+	// Run Clipboard
+
+	var copyCode = new Clipboard('.copy-button', {
+		target: function(trigger) {
+			return trigger.previousElementSibling;
+    }
+	});
+
+	// On success:
+	// - Change the "Copy" text to "Copied".
+	// - Swap it to "Copy" in 2s.
+	// - Lead user to the "contenteditable" area with Velocity scroll.
+
+	copyCode.on('success', function(event) {
+		event.clearSelection();
+		event.trigger.textContent = 'Copied';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 2000);
+
+	});
+
+	// On error (Safari):
+	// - Change the  "Press Ctrl+C to copy"
+	// - Swap it to "Copy" in 2s.
+
+	copyCode.on('error', function(event) {
+		event.trigger.textContent = 'Press "Ctrl + C" to copy';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 5000);
+	});
+
+})();
+</script>
+
+    
+  </body>
+</html>

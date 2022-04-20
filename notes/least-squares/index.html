@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="/ubc-cpsc-406/libs/katex/katex.min.css">
+     
+  
+     <link rel="stylesheet" href="/ubc-cpsc-406/libs/highlight/github.min.css">
+
+     <script src="/ubc-cpsc-406/libs/clipboard.min.js"></script>
+  
+    <link rel="stylesheet" href="/ubc-cpsc-406/css/jtd.css">
+  <link rel="icon" href="/ubc-cpsc-406/assets/favicon.ico">
+
+   <title>Least Squares</title>  
+</head>
+<body>                      <!-- closed in foot.html -->
+<div class="page-wrap">   <!-- closed in foot.html -->
+  <!-- SIDE BAR -->
+  <div class="side-bar">
+    <div class="header">
+      <a href="/ubc-cpsc-406/" class="title">
+        CPSC 406 
+      </a>
+    </div>
+    <label for="show-menu" class="show-menu">MENU</label>
+    <input type="checkbox" id="show-menu" role="button">
+    <div class="menu" id="side-menu">
+      <ul class="menu-list">
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/" class="menu-list-link">Home</a>
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/grades/" class="menu-list-link">Grades</a>
+        <li class="menu-list-parent active"><a href="/ubc-cpsc-406/notes/" class="menu-list-link">Schedule</a>
+          <!-- <ul class="menu-list-child-list ">
+            <li class="menu-list-item {{ispage notes/least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/least-squares" class="menu-list-link">Least-squares</a>
+            <li class="menu-list-item {{ispage notes/qr-factorization}}active{{end}}"><a href="/ubc-cpsc-406/notes/qr-factorization" class="menu-list-link">QR</a>
+            <li class="menu-list-item {{ispage notes/regularized-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/regularized-least-squares" class="menu-list-link">Regularization</a>
+            <li class="menu-list-item {{ispage notes/gradients}}active{{end}}"><a href="/ubc-cpsc-406/notes/gradients" class="menu-list-link">Gradients</a>
+            <li class="menu-list-item {{ispage notes/nonlinear-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/nonlinear-least-squares" class="menu-list-link">Nonlinear least squares</a>
+          </ul>  -->
+      </ul>
+    </div>
+    <div class="footer">
+      <!-- This is <em>Just the docs</em>, adapted from the <a href="https://github.com/pmarsceill/just-the-docs" target="_blank">Jekyll theme</a>. -->
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="main-content-wrap"> <!-- closed in foot.html -->
+    <div class="main-content">    <!-- closed in foot.html -->
+      <div class="main-header">
+        <a name="pagetop"></a>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406/blob/main/notes/least-squares.md">Page source</a>
+		    <span style="width:30px; text-align: center;color:lightgray;">|</span>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406">GitHub repo</a>
+      </div>
+
+
+
+<!-- Content appended here (in class franklin-content) -->
+<div class="franklin-content"><h1 id="least_squares"><a href="#least_squares" class="header-anchor">Least Squares</a></h1>
+
+    <span style="font-size:24px;font-weight:300;">Linear least-squares, also known as ordinary linear regression, is a  basic optimization problem used for data fitting. It's also a fundamental building block for algorithms meant for more general problems.</span>
+    
+<h3 id="required_reading"><a href="#required_reading" class="header-anchor">Required Reading</a></h3>
+<ul>
+<li><p><a href="https://doi.org/10.1137/1.9781611973655.ch3">Sections 3.1–3.2</a> of Beck. </p>
+</li>
+</ul>
+<h2 id="example_multilinear_regression"><a href="#example_multilinear_regression" class="header-anchor">Example: Multilinear regression</a></h2>
+<p>We begin with a simple example and use linear regression to build a model that relates the fuel efficiency of a car with its weight, engine displacement, and engine horsepower.  Load the <a href="https://vincentarelbundock.github.io/Rdatasets/doc/datasets/mtcars.html"><code>mtcars</code></a> dataset provided in the <a href="https://github.com/JuliaStats/RDatasets.jl"><code>Rdatasets.jl</code></a> package:</p>
+<pre><code class="language-julia">using RDatasets
+mtcars &#61; RDatasets.dataset&#40;&quot;datasets&quot;, &quot;mtcars&quot;&#41;</code></pre>
+
+<p>Here are the first five rows of the dataset, which contains 32 rows in total:</p>
+<pre><code class="language-julia">first&#40;mtcars, 5&#41;</code></pre>
+<pre><code class="plaintext code-output">5×12 DataFrame
+ Row │ Model              MPG      Cyl    Disp     HP     DRat     WT       QSec     VS     AM     Gear   Carb
+     │ String31           Float64  Int64  Float64  Int64  Float64  Float64  Float64  Int64  Int64  Int64  Int64
+─────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │ Mazda RX4             21.0      6    160.0    110     3.9     2.62     16.46      0      1      4      4
+   2 │ Mazda RX4 Wag         21.0      6    160.0    110     3.9     2.875    17.02      0      1      4      4
+   3 │ Datsun 710            22.8      4    108.0     93     3.85    2.32     18.61      1      1      4      1
+   4 │ Hornet 4 Drive        21.4      6    258.0    110     3.08    3.215    19.44      1      0      3      1
+   5 │ Hornet Sportabout     18.7      8    360.0    175     3.15    3.44     17.02      0      0      3      2</code></pre>
+<p>The model that we wish to build aims to find coefficients \(x_1,\ldots,x_4\in\mathbb R\) such that for each particular car model \(i=1,2,\ldots,32\),</p>
+<div class="nonumber">\[
+\text{MPG}_i \approx x_1 + x_2\cdot\text{Disp}_i + x_3\cdot\text{HP}_i + x_4\cdot\text{WT}_i.
+\]</div>
+<p>Of course, we shouldn&#39;t expect an exact match for all car models \(i\), and instead the coefficients \(x_1,\ldots,x_4\) computed by ordinary linear regression minimizes the sum of least-squares deviations:</p>
+<a id="mpg-ls" class="anchor"></a>\[ 
+\min_{x_1,\ldots,x_4}\ \sum_{i=1}^{32} (x_1 + x_2\cdot\text{Disp}_i + x_3\cdot\text{HP}_i + x_4\cdot\text{WT}_i - \text{MPG}_i)^2
+\]
+<p>Because this is such an important problem in general, there exists excellent software packages that make formulating and solving these problems easy. Here&#39;s how to do it using the generalized linear models package <a href="https://juliastats.org/GLM.jl/stable/">GLM.jl</a>: </p>
+<pre><code class="language-julia">using GLM
+ols &#61; lm&#40;@formula&#40;MPG ~ Disp &#43; HP &#43; WT&#41;, mtcars&#41;</code></pre>
+<pre><code class="plaintext code-output">::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=179::parsing MPG ~ Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (~) i=2: MPG
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (~) i=3: Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=179::parsing Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=2: Disp
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=3: HP
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=4: WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=203::done: Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=203::done: MPG ~ Disp + HP + WT
+StatsModels.TableRegressionModel{GLM.LinearModel{GLM.LmResp{Vector{Float64}}, GLM.DensePredChol{Float64, LinearAlgebra.CholeskyPivoted{Float64, Matrix{Float64}}}}, Matrix{Float64}}
+
+MPG ~ 1 + Disp + HP + WT
+
+Coefficients:
+───────────────────────────────────────────────────────────────────────────────
+                    Coef.  Std. Error      t  Pr(>|t|)   Lower 95%    Upper 95%
+───────────────────────────────────────────────────────────────────────────────
+(Intercept)  37.1055        2.11082    17.58    <1e-15  32.7817     41.4293
+Disp         -0.000937009   0.0103497  -0.09    0.9285  -0.0221375   0.0202635
+HP           -0.0311566     0.0114358  -2.72    0.0110  -0.0545817  -0.00773139
+WT           -3.80089       1.06619    -3.56    0.0013  -5.98488    -1.6169
+───────────────────────────────────────────────────────────────────────────────</code></pre>
+<p>The column marked <code>Coef.</code> shows the values for the 4 computed coefficients \(x_1,\ldots,x_4\); the remaining columns show the results for various statistical tests that indicate the reliability of each coefficient It appears that the car&#39;s weight has the biggest impact on fuel economy. This plot shows the projection of the data and the regression line onto the plane spanned by <code>WT</code> and <code>MPG</code>:</p>
+<pre><code class="language-julia">using StatsPlots; pyplot&#40;&#41;
+x₁, x₄ &#61; coef&#40;ols&#41;&#91;&#91;1,4&#93;&#93;
+@df mtcars scatter&#40;:WT, :MPG, xlabel&#61;&quot;weight &#40;1000s lbs&#41;&quot;, ylabel&#61;&quot;MPG&quot;, leg&#61;false&#41;
+@df mtcars plot&#33;&#40;:WT, x₁ .&#43; x₄*:WT&#41;</code></pre>
+<img src="/ubc-cpsc-406/assets/notes/least-squares/code/output/ls-fit.png" alt="">
+<h3 id="matrix_formulation"><a href="#matrix_formulation" class="header-anchor">Matrix formulation</a></h3>
+<p>The objective <span class="eqref">(<a href="#mpg-ls">1</a>)</span> can be written using matrix notation, as follows: define the matrix and vector</p>
+<div class="nonumber">\[
+A = \begin{bmatrix}
+  1 & \text{WT}_1 & \text{Disp}_1 & \text{HP}_1
+\\\vdots & \vdots & \vdots & \vdots
+\\1 & \text{WT}_m & \text{Disp}_m & \text{HP}_m
+\end{bmatrix},
+\quad
+b = \begin{bmatrix} \text{MPG}_1 \\ \vdots \\ \text{MPG}_m \end{bmatrix},
+\quad
+x = \begin{bmatrix} x_1 \\ x_2 \\ x_3 \\ x_4 \end{bmatrix}, 
+\]</div>
+<p>where \(m=32\). Thus, the least-squares soluition \(x^*\) minimizes the 2-norm squared \(\|r\|^2\) of the residual \(r = b - Ax\).</p>
+<div class="note"><div class="title">Notation</div>
+<div class="content"><p>The 2-norm of a vector \(z\in\mathbb R^n\) is the function <div class="nonumber">\[
+\|z\|_2 = \sqrt{z_1^2+\cdots+z_n^2}.
+\]</div> This norm has the property that</p>
+<div class="nonumber">\[
+  z^T\! z = \begin{bmatrix} z_1\\\vdots\\ z_n\end{bmatrix}^T\!
+	  \begin{bmatrix} z_1\\\vdots\\ z_n\end{bmatrix}
+	= \sum_{i=1}^n z_i^2 = \|z\|_2^2.
+\]</div>
+<p>We often leave out the subscript and simply write \(\|z\|\) for the 2-norm, unless warned otherwise.</p></div></div>
+<h2 id="general_least-squares_formulation"><a href="#general_least-squares_formulation" class="header-anchor">General least-squares formulation </a></h2>
+<p>The general linear-least squares problem is formulated as</p>
+<a id="eqleast-squares-problems" class="anchor"></a>\[ 
+\min_{x\in\mathbb R^n}\ \tfrac12\|r\|^2, \quad r = b - Ax,
+\]
+<p>where \(A\) is an \(m\)-by-\(n\) matrix, \(b\) is an \(m\)-vector, \(x\) is an \(n\)-vector, and \(r\) is an \(m\)-vector of residuals. Typically, there are many more observations than \(m\) than variables \(n\), and so \(m\gg n\). But there are many important application that require least-squares problems where the opposite is true – these problems are considered <strong>under determined</strong> because there are necessarily infinitely many least-squares solutions \(x_\mathrm{\tiny LS}.\)</p>
+<p>The following fundamental result describes several equivalent conditions that any least-squares solution must satisfy.</p>
+<div class="theorem"><p><strong>Theorem</strong>: &#40;<strong>Least-squares optimality</strong>&#41;  The vector \(x_\mathrm{\tiny LS}\) solves the least-squares problem <span class="eqref">(<a href="#eqleast-squares-problems">2</a>)</span> if and only if it satisfies the following equivalent conditions hold:</p>
+<ol>
+<li><p>\(A^T r = 0\), where \(r=b-Ax\),</p>
+</li>
+<li><p>\(A^T\! A x = A^T b\),</p>
+</li>
+<li><p>\(y:=Ax\) is the unique orthogonal projection of \(b\) onto \(\hbox{range}(A)\).</p>
+</li>
+</ol>
+<p>Moreover, \(x_\mathrm{\tiny LS}\) is the unique least-squares solution if and only if \(A\) has full rank.</p></div>
+<p>This result relies on a fundamental property that for all matrices \(A\), regardless of their shape, the subspaces</p>
+<div class="nonumber">\[\begin{aligned}
+   \hbox{range}(A) &= \{y \mid y = A x \text{ for some } x \}
+ \\\text{null}(A^T\!\,) &= \{z \mid A^T\! z = 0 \}
+\end{aligned}\]</div>
+<p>are orthogonal complements, i.e.,</p>
+<div class="nonumber"><a id="least_squares_ftla" class="anchor"></a>\[ 
+  \hbox{range}(A) \oplus \hbox{null}(A^\intercal) = \mathbb R^m.
+\]</div>
+<p>The equivalence of the three properties is then straightforward, and it&#39;s sufficient to show that the third condition is equivalent to the optimality of the least-squares problem. Orthogonally decompose the residual \(r = b-y\) as</p>
+<div class="nonumber">\[
+  b - y = z_n + z_r, \quad z_r\in\hbox{range}(A), \quad z_n\in\hbox{null}(A^T\!).
+\]</div>
+<p>If \(y\) was <em>not</em> the orthogonal projection of \(b\), then there must exist some component of \(b-y\) in the range of \(A\). Thus, \(z_r\ne0\) and</p>
+<div class="nonumber">\[\begin{aligned}
+  \|r\|^2 &= \|b-y\|^2
+\\        &= \|z_n+z_r\|^2
+\\        &= \|z_n\|^2+\|z_r\|^2
+\\        &> \|z_n\|^2=\|b-(y+z_r)\|^2,
+\end{aligned}\]</div>
+<p>which means we found a new point \((y+z_r)\in\hbox{range}(A)\) with a smaller residual, which contradicts the optimality of \(x_\mathrm{\tiny LS}\), and also the uniqueness of the projection \(y\).</p>
+<h2 id="example_multilinear_regression_continued"><a href="#example_multilinear_regression_continued" class="header-anchor">Example: Multilinear regression &#40;continued&#41;</a></h2>
+<p>For the <a href="#example-multilinear-regression">multilinear regression example</a>, we can obtain the least-squares solution by solving the normal equations as follows:</p>
+<pre><code class="language-julia">using LinearAlgebra # gives &#96;norm&#96; function
+A &#61; &#91;ones&#40;size&#40;mtcars,1&#41;&#41; mtcars&#91;:,:Disp&#93;  mtcars&#91;:,:HP&#93; mtcars&#91;:,:WT&#93;&#93;
+b &#61; mtcars&#91;:,:MPG&#93;
+x &#61; A&#39;A \ A&#39;b
+@show&#40;norm&#40;x-coef&#40;ols&#41;&#41;&#41;</code></pre>
+<p><pre><code class="plaintext code-output">norm(x - coef(ols)) = 1.3751619950045953e-13
+</code></pre> The coefficients computed using the normal equations are <em>almost</em> the same as those computed using by GLM, which likely solves the normal equations using a different method.</p>
+<p>The least-squares solution should also verify the first condition of the above theorem:</p>
+<pre><code class="language-julia">r &#61; b - A*x
+@show&#40;norm&#40;A&#39;r&#41;&#41;</code></pre>
+<pre><code class="plaintext code-output">norm(A' * r) = 2.6596380858876605e-11
+</code></pre>
+<h2 id="the_backslash_operator"><a href="#the_backslash_operator" class="header-anchor">The backslash operator </a></h2>
+<p>In this last example, we solved for the least-squares solution by explicitly solving the normal equations \(A^T\! Ax=A^T\! b\) via the Julia command <code>x &#61; A&#39;A \ A&#39;b</code>. As we&#39;ll see in a later lecture, this isn&#39;t the best way to solve the least-squares problem. Without getting into the details just yet, it&#39;s enough for now to know that Julia allows for the short-hand <code>x &#61; A \ b</code>: Julia recognizes that this is an overdetermined system, and solves for the least-squares solution using a mathematically equivalent approach. Let&#39;s verify:</p>
+<pre><code class="language-julia">x1 &#61; A \ b
+@show norm&#40;x1 - x, Inf&#41;</code></pre>
+<pre><code class="plaintext code-output">norm(x1 - x, Inf) = 4.476419235288631e-13
+</code></pre>
+<p>Close enough&#33;</p>
+<h2 id="example_trendline"><a href="#example_trendline" class="header-anchor">Example: Trendline </a></h2>
+<p>This example uses least-squares to illustrate the increasing concentrations of <a href="https://en.wikipedia.org/wiki/Nitrous_oxide">nitrous oxide &#40;N₂O&#41;</a>, which is a greenhouse gas. We&#39;ll use a dataset from the <a href="https://gml.noaa.gov">Global Monitoring Laboratory</a>:</p>
+<pre><code class="language-julia">fname &#61; &quot;mlo_N2O_All.dat&quot;
+if &#33;isfile&#40;fname&#41;
+	download&#40;&quot;https://gml.noaa.gov/aftp/data/hats/n2o/insituGCs/CATS/hourly/mlo_N2O_All.dat&quot;, fname&#41;
+end</code></pre>
+<p>This dataset provides hourly measurements of N₂O levels in parts per billion &#40;ppb&#41; from 1999 to 2021 from gas sampled at the <a href="https://www.google.com/maps/place/Mauna&#43;Loa&#43;Observatory/@19.5363584,-155.5786506,17z/data&#61;&#33;3m1&#33;4b1&#33;4m5&#33;3m4&#33;1s0x7953ef53fcc844c9:0x125658bfa768626b&#33;8m2&#33;3d19.5363852&#33;4d-155.5764517">Manua Loa Observatory</a> in Hawaii. The following code removes rows with missing concentration levels <code>ppb</code>, and creates a new table with average monthly measurements:</p>
+<pre><code class="language-julia">using CSV, DataFrames, DataFramesMeta, Statistics
+df &#61; CSV.read&#40;fname, DataFrame, comment&#61;&quot;#&quot;, normalizenames&#61;true, delim&#61;&quot; &quot;, ignorerepeated&#61;true&#41;
+dfg &#61; @chain df begin
+    @select&#40;:year &#61; :N2OcatsMLOyr, :month &#61; :N2OcatsMLOmon, :ppb &#61; :N2OcatsMLOm&#41;
+    @subset&#40;&#40;&#33;isnan&#41;.&#40;:ppb&#41;&#41;
+    @by&#40;&#91;:year, :month&#93;, :avgppb &#61; mean&#40;:ppb&#41;&#41;
+end 
+describe&#40;dfg, :min, :max, cols&#61;&#91;:year, :avgppb&#93;&#41;</code></pre>
+<pre><code class="plaintext code-output">ArgumentError: "mlo_N2O_All.dat" is not a valid file or doesn't exist
+</code></pre>
+<p>A trend line is defined by the univariate function</p>
+<div class="nonumber">\[
+  p(t) = \alpha + \beta t,
+\]</div>
+<p>where \(\alpha\) is the intercept, \(\beta\) is the slope, and \(t\) is time. Here, we&#39;ll just index the months by the integers \(t=1,2,\ldots,T\). We determine the parameters \(\alpha\) and \(\beta\) by solving the least-squares problem</p>
+<div class="nonumber">\[
+ \min_{\alpha,\ \beta}\ \sum_{i=1}^{T}(p(t_i) - \text{ppb}_i)^2,
+\]</div>
+<p>which corresponds to the general least-squares problem with</p>
+<div class="nonumber">\[
+  A = \begin{bmatrix} 1  & t_1 \\ 1 & t_2 \\ \vdots & \vdots \\ 1 & T \end{bmatrix},
+  \quad
+  b = \begin{bmatrix} \text{ppb}_1 \\ \text{ppb}_2 \\ \vdots \\ \text{ppb}_T \end{bmatrix},
+  \quad\text{ and}\quad
+  x = \begin{bmatrix} \alpha \\ \beta \end{bmatrix}.
+\]</div>
+<p>In Julia,</p>
+<pre><code class="language-julia">T &#61; nrow&#40;dfg&#41;
+t &#61; collect&#40;1:T&#41;
+A &#61; &#91;ones&#40;T&#41;  t&#93;
+b &#61; dfg&#91;&#33;, :avgppb&#93;</code></pre>
+<p>The least-squares solution is then</p>
+<pre><code class="language-julia">α, β &#61; A \ b</code></pre>
+<p>and we can plot the data together with the trend line:</p>
+<pre><code class="language-julia">@df dfg scatter&#40;:avgppb&#41; 
+p&#40;t&#41; &#61; α &#43; β*t
+plot&#33;&#40;p, lw&#61;3&#41;
+plot&#33;&#40;leg&#61;false, xlab&#61;&quot;Month index from 1999 to 2021&quot;, ylab&#61;&quot;Monthly average N₂O ppb&quot;&#41;</code></pre>
+<p><span style="color:red;">// Image matching '/assets/notes/least-squares/code/ls-n2o-2' not found. //</span></p>
+<p>But perhaps most interestingly, we can now &quot;detrend&quot; the data to understand how the concentrations vary around the overall 22-year trend:</p>
+<pre><code class="language-julia">@df dfg scatter&#40;:avgppb - p.&#40;t&#41;&#41;</code></pre>
+<p><span style="color:red;">// Image matching '/assets/notes/least-squares/code/ls-n2o-3' not found. //</span></p>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Michael P. Friedlander | Last modified: April 20, 2022.
+  </br> Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div> <!-- end of class main-content -->
+    </div> <!-- end of class main-content-wrap -->
+    </div> <!-- end of class page-wrap-->
+    
+      <script src="/ubc-cpsc-406/libs/katex/katex.min.js"></script>
+<script src="/ubc-cpsc-406/libs/katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body)</script>
+
+    
+    
+      <script src="/ubc-cpsc-406/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+      <!-- http://tutsplus.github.io/clipboard/ -->
+
+<script>
+(function(){
+
+	// Get the elements.
+	// - the 'pre' element.
+	// - the 'div' with the 'paste-content' id.
+
+	var pre = document.getElementsByTagName('pre');
+
+	// Add a copy button in the 'pre' element.
+	// which only has the className of 'language-'.
+
+	for (var i = 0; i < pre.length; i++) {
+		var isLanguage = pre[i].children[0].className.indexOf('language-');
+
+		if ( isLanguage === 0 ) {
+			var button           = document.createElement('button');
+					button.className = 'copy-button';
+					button.textContent = 'Copy';
+
+					pre[i].appendChild(button);
+		}
+	};
+
+	// Run Clipboard
+
+	var copyCode = new Clipboard('.copy-button', {
+		target: function(trigger) {
+			return trigger.previousElementSibling;
+    }
+	});
+
+	// On success:
+	// - Change the "Copy" text to "Copied".
+	// - Swap it to "Copy" in 2s.
+	// - Lead user to the "contenteditable" area with Velocity scroll.
+
+	copyCode.on('success', function(event) {
+		event.clearSelection();
+		event.trigger.textContent = 'Copied';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 2000);
+
+	});
+
+	// On error (Safari):
+	// - Change the  "Press Ctrl+C to copy"
+	// - Swap it to "Copy" in 2s.
+
+	copyCode.on('error', function(event) {
+		event.trigger.textContent = 'Press "Ctrl + C" to copy';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 5000);
+	});
+
+})();
+</script>
+
+    
+  </body>
+</html>

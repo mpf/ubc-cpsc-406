@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="/ubc-cpsc-406/libs/katex/katex.min.css">
+     
+  
+     <link rel="stylesheet" href="/ubc-cpsc-406/libs/highlight/github.min.css">
+
+     <script src="/ubc-cpsc-406/libs/clipboard.min.js"></script>
+  
+    <link rel="stylesheet" href="/ubc-cpsc-406/css/jtd.css">
+  <link rel="icon" href="/ubc-cpsc-406/assets/favicon.ico">
+
+   <title>Regularized Least Squares</title>  
+</head>
+<body>                      <!-- closed in foot.html -->
+<div class="page-wrap">   <!-- closed in foot.html -->
+  <!-- SIDE BAR -->
+  <div class="side-bar">
+    <div class="header">
+      <a href="/ubc-cpsc-406/" class="title">
+        CPSC 406 
+      </a>
+    </div>
+    <label for="show-menu" class="show-menu">MENU</label>
+    <input type="checkbox" id="show-menu" role="button">
+    <div class="menu" id="side-menu">
+      <ul class="menu-list">
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/" class="menu-list-link">Home</a>
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/grades/" class="menu-list-link">Grades</a>
+        <li class="menu-list-parent active"><a href="/ubc-cpsc-406/notes/" class="menu-list-link">Schedule</a>
+          <!-- <ul class="menu-list-child-list ">
+            <li class="menu-list-item {{ispage notes/least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/least-squares" class="menu-list-link">Least-squares</a>
+            <li class="menu-list-item {{ispage notes/qr-factorization}}active{{end}}"><a href="/ubc-cpsc-406/notes/qr-factorization" class="menu-list-link">QR</a>
+            <li class="menu-list-item {{ispage notes/regularized-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/regularized-least-squares" class="menu-list-link">Regularization</a>
+            <li class="menu-list-item {{ispage notes/gradients}}active{{end}}"><a href="/ubc-cpsc-406/notes/gradients" class="menu-list-link">Gradients</a>
+            <li class="menu-list-item {{ispage notes/nonlinear-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/nonlinear-least-squares" class="menu-list-link">Nonlinear least squares</a>
+          </ul>  -->
+      </ul>
+    </div>
+    <div class="footer">
+      <!-- This is <em>Just the docs</em>, adapted from the <a href="https://github.com/pmarsceill/just-the-docs" target="_blank">Jekyll theme</a>. -->
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="main-content-wrap"> <!-- closed in foot.html -->
+    <div class="main-content">    <!-- closed in foot.html -->
+      <div class="main-header">
+        <a name="pagetop"></a>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406/blob/main/notes/regularized-least-squares.md">Page source</a>
+		    <span style="width:30px; text-align: center;color:lightgray;">|</span>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406">GitHub repo</a>
+      </div>
+
+
+
+<!-- Content appended here (in class franklin-content) -->
+<div class="franklin-content"><h1 id="regularized_least_squares"><a href="#regularized_least_squares" class="header-anchor">Regularized Least Squares</a></h1>
+
+
+    <span style="font-size:24px;font-weight:300;">Regularization introduces to an optimization problem prior information or assumptions about properties of an optimal solution. A regularization parameter governs the tradeoff between the fidelity to the unmodified problem and the desired solution properties.</span>
+    
+<h2 id="the_pareto_frontier"><a href="#the_pareto_frontier" class="header-anchor">The Pareto frontier</a></h2>
+<p>The standard <a href="least-squares">least-squares problem</a> can be interpreted as a method for recovering some underlying object &#40;say, a signal or image&#41; encoded in the vector \(x_0\) using noisy measurements of the form</p>
+<a id="eqstandard-ls" class="anchor"></a>\[ 
+   b := Ax_0 + w_1,
+\]
+<p>where \(w\) is random noise and the matrix \(A\) describes the measurement process. The least-squares problem</p>
+<div class="nonumber">\[
+  \min_{x\in\mathbb R^n}\ \|Ax-b\|^2.
+\]</div>
+<p>seeks a solution \(x\) under the implicit assumption that the noise term \(w_1\) is small.</p>
+<p>But what if \(x\) also needs to satisfy some other competing objective?  Suppose, for example, that we have also available other set of measurements of \(x_0\) of the form \(d = Cx_0+w_2\), where \(w_2\) is also random noise. The &quot;best&quot; choice for \(x\) is not necessarily <span class="eqref">(<a href="#eqstandard-ls">1</a>)</span>, and instead we wish to choose \(x\) to balance the two objective values</p>
+<div class="nonumber">\[
+f_1(x) = \|Ax - b\|^2 \quad\text{and}\quad f_2(x) = \|Cx - d\|^2.
+\]</div>
+<p>Generally, we can make \(f_1(x)\) or \(f_2(x)\) small, but not both. The figure below sketches the relationship between the pair \(\{f_1(x), f_2(x)\}\) for all values of \(x\).</p>
+<img src="/ubc-cpsc-406/assets/notes/regularized-least-squares/pareto-curve.svg" alt="">
+<p>The objective pairs on the boundary of two regions is the <a href="https://en.wikipedia.org/wiki/Pareto_efficiency">Pareto frontier</a>. We can compute these Pareto optimal solutions \(x\) by minimizing the weighted sum objective</p>
+<a id="regularized_ls_weights" class="anchor"></a>\[ 
+f_1(x)+\gamma f_2(x) = \|Ax-g\|^2+ λ\|Cx-d\|^2,
+\]
+<p>where the positive parameter \(\lambda\) provides the relative weight between the objectives. </p>
+<p>For fixed scalars \(λ\) and \(α\), the set </p>
+\[
+\ell(\lambda,\alpha) = \{\ (f_1(x),f_2(x)) \mid f_1(x) + \lambda f_2(x) = \alpha,\ x \in \mathbb R^n\ \}
+\]
+<p>forms the graph of a line with slope of \(-\lambda\). We may visualize the optimization problem <span class="eqref">(<a href="#regularized_ls_weights">2</a>)</span> as the problem of finding the smallest value \(\alpha\) such that the line is tangent to the Pareto frontier.</p>
+<img src="/ubc-cpsc-406/assets/notes/regularized-least-squares/pareto-curve-levels.svg" alt="">
+<h2 id="tikhonov_regularization"><a href="#tikhonov_regularization" class="header-anchor">Tikhonov regularization</a></h2>
+<p>A particularly common example of regularized least-squares is <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization">Tikhonov</a>, which has the form</p>
+<div class="nonumber">\[
+\min_{x} \tfrac12\|Ax-b\|^2 + \lambda\tfrac12\|Dx\|^2,
+\]</div>
+<p>for which the objective can be expressed as</p>
+\[
+\|Ax-b\|^2+\lambda\|Dx\|^2
+ = \bigg\|\begin{bmatrix} A\\\sqrt{\lambda}D\end{bmatrix} x - \begin{bmatrix} b\\ 0\end{bmatrix}\bigg\|^2.
+\]
+<p>If \(D\) has full column rank, then the stacked matrix</p>
+\[
+\begin{bmatrix} A\\\sqrt{\lambda}D\end{bmatrix}
+\]
+<p>necessarily also has full rank for any positive \(\lambda\), which implies that the regularized problem always has a well-defined unique solution.</p>
+<h2 id="example_signal_denoising"><a href="#example_signal_denoising" class="header-anchor">Example: Signal denoising</a></h2>
+<div class="note"><div class="title">⚠ Note</div>
+<div class="content"><p>This example uses the following packages:</p>
+<pre><code class="language-julia">using LinearAlgebra
+using Plots</code></pre></div></div>
+<p>Consider a noisy measurement</p>
+\[
+b := x^\natural + w
+\]
+<p>of a signal \(x^\natural\), where the vector \(w\) represents unknown noise. Here&#39;s a simple 1-dimensional noisy signal:</p>
+<pre><code class="language-julia">n &#61; 300
+t &#61; LinRange&#40;0, 4, n&#41;
+x &#61; @. sin&#40;t&#41; &#43; t*cos&#40;t&#41;^2
+w &#61; 0.1*randn&#40;n&#41;
+b &#61; x &#43; w
+plot&#40;b, leg&#61;:topleft, label&#61;&quot;noisy signal&quot;&#41;</code></pre>
+<img src="/ubc-cpsc-406/assets/notes/regularized-least-squares/code/output/ls-reg-noisy1.png" alt="">
+<p>The obvious least-squares problem</p>
+\[
+\min_{x}\ \tfrac12\|x-b\|^2
+\]
+<p>isn&#39;t useful because the optimal solution is simply the noisy measurements \(b\), and so it doesn&#39;t yield any new information. But suppose we believe that the signal is &quot;smooth&quot; in the sense that the consecutive elements of </p>
+\[ x=(x_1,\ldots,x_i,x_{i+1},\ldots,x_n)\]
+<p>change relatively little, i.e., the difference \(|x_i-x_{i+1}|\) is small relative to \(x\). In this case, we might balance the least-squares fit against the smoothness of the solution by instead solving the regularized least-squares problem </p>
+<a id="regularized_ls_identity" class="anchor"></a>\[
+  \min_{x}\ \tfrac12\underbrace{\vphantom{\sum_{i=1}}\|x-b\|^2}_{f_1(x)} + λ\tfrac12 \underbrace{\sum_{i=1}^{n-1}(x_i - x_{i+1})^2}_{f_2(x)}.
+\]
+<p>The role of the regularizer \(f_2(x)\) is to promote smooth changes in the elements of \(x\).</p>
+<h3 id="matrix_notation"><a href="#matrix_notation" class="header-anchor">Matrix notation</a></h3>
+<p>We can alternatively write the above minimization program in matrix notation. Define the \((n-1)\)-by-\(n\) finite difference matrix</p>
+\[
+D = \begin{bmatrix} 1 & -1 & \phantom+0 & \cdots & \phantom+0 & \phantom+0\\
+           0 & \phantom+1 & -1 & 0 & \cdots & \phantom+0\\
+             &\ddots  & \ddots & \ddots &  &  \\
+           \vdots &  & \phantom+0 & 1 & -1 & \phantom+0\\
+            0 & \cdots &  & 0 & \phantom+1 & -1\end{bmatrix},
+\]
+<p>which when applied to a vector \(x\), yields a vector of the differences:</p>
+\[
+Dx = \begin{bmatrix} x_1 - x_2 \\ x_2 - x_3 \\ \vdots \\ x_{n-1} - x_n\end{bmatrix}.
+\]
+<p>Then we can rephrase the regularization objective as </p>
+\[ f_2(x) = \sum_{i=1}^{n-1}(x_i - x_{i+1})^2 = \|Dx\|^2. \]
+<p>This allows for a reformulation of the weighted leas squares objective into a familiar least squares objective:</p>
+\[
+\|x-b\|^2+\lambda\|Dx\|^2 = \bigg\|\underbrace{\begin{bmatrix} I\\\sqrt{\lambda}D\end{bmatrix}}_{\hat{A}}x - 
+\underbrace{\begin{bmatrix} b\\ 0\end{bmatrix}}_{\hat{b}}\bigg\|^2.
+\]
+<p>So the solution to the weighted least squares minimization program <span class="eqref">(<a href="#regularized_ls_identity">9</a>)</span> satisfies the normal equation \(\hat{A}^T\!\hat{A}x = \hat{A}^T\!\hat{b}\), which simplifies to </p>
+\[
+(I + \lambda D^T\! D)x = b.
+\]
+<p>The following function generates the required finite-difference matrix:</p>
+<pre><code class="language-julia">finiteDiff&#40;n&#41; &#61; diagm&#40;0 &#61;&gt; ones&#40;n&#41;, &#43;1 &#61;&gt; -ones&#40;n-1&#41;&#41;&#91;1:n-1,:&#93;</code></pre>
+<p>Here&#39;s an example of a small finite-difference matrix:</p>
+<pre><code class="language-julia">finiteDiff&#40;4&#41;</code></pre>
+<pre><code class="plaintext code-output">3×4 Matrix{Float64}:
+ 1.0  -1.0   0.0   0.0
+ 0.0   1.0  -1.0   0.0
+ 0.0   0.0   1.0  -1.0</code></pre>
+<p>The function below returns a <a href="https://docs.julialang.org/en/v1/manual/arrays/#Generator-Expressions">generator</a>, which produces \(n\) logarithmically-spaced numbers in the interval \([x_1,x_2]\):</p>
+<pre><code class="language-julia">LogRange&#40;x1, x2, n&#41; &#61; &#40;10^y for y in range&#40;log10&#40;x1&#41;, log10&#40;x2&#41;, length&#61;n&#41;&#41;</code></pre>
+<p>Now solve the regularized least-squares problem for several values of \(\lambda\in[1,10^4]\):</p>
+<pre><code class="language-julia">D &#61; finiteDiff&#40;n&#41;
+b̂ &#61; &#91;b; zeros&#40;n-1&#41;&#93;
+plot&#40;t, b, w&#61;1, leg &#61;:topleft, label&#61;&quot;noisy data&quot;&#41;
+for λ in LogRange&#40;1e0, 1e4, 3&#41; 
+    Â &#61; &#91; I; √λ*D &#93;
+    xLS &#61; Â \ b̂
+    plot&#33;&#40;t, xLS, w&#61;2, label&#61;&quot;regularized solution: λ &#61; &#36;&#40;λ&#41;&quot;&#41;
+end</code></pre>
+<p>Note that the expression <code>Â &#61; &#91; I; √λ*D &#93;</code> contains the <a href="https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.UniformScaling-Tuple&#123;Integer&#125;">UniformScaling</a> object, which represents an identity matrix of any size.</p>
+<img src="/ubc-cpsc-406/assets/notes/regularized-least-squares/code/output/ls-reg-noisy3.png" alt="">
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Michael P. Friedlander | Last modified: April 20, 2022.
+  </br> Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div> <!-- end of class main-content -->
+    </div> <!-- end of class main-content-wrap -->
+    </div> <!-- end of class page-wrap-->
+    
+      <script src="/ubc-cpsc-406/libs/katex/katex.min.js"></script>
+<script src="/ubc-cpsc-406/libs/katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body)</script>
+
+    
+    
+      <script src="/ubc-cpsc-406/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+      <!-- http://tutsplus.github.io/clipboard/ -->
+
+<script>
+(function(){
+
+	// Get the elements.
+	// - the 'pre' element.
+	// - the 'div' with the 'paste-content' id.
+
+	var pre = document.getElementsByTagName('pre');
+
+	// Add a copy button in the 'pre' element.
+	// which only has the className of 'language-'.
+
+	for (var i = 0; i < pre.length; i++) {
+		var isLanguage = pre[i].children[0].className.indexOf('language-');
+
+		if ( isLanguage === 0 ) {
+			var button           = document.createElement('button');
+					button.className = 'copy-button';
+					button.textContent = 'Copy';
+
+					pre[i].appendChild(button);
+		}
+	};
+
+	// Run Clipboard
+
+	var copyCode = new Clipboard('.copy-button', {
+		target: function(trigger) {
+			return trigger.previousElementSibling;
+    }
+	});
+
+	// On success:
+	// - Change the "Copy" text to "Copied".
+	// - Swap it to "Copy" in 2s.
+	// - Lead user to the "contenteditable" area with Velocity scroll.
+
+	copyCode.on('success', function(event) {
+		event.clearSelection();
+		event.trigger.textContent = 'Copied';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 2000);
+
+	});
+
+	// On error (Safari):
+	// - Change the  "Press Ctrl+C to copy"
+	// - Swap it to "Copy" in 2s.
+
+	copyCode.on('error', function(event) {
+		event.trigger.textContent = 'Press "Ctrl + C" to copy';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 5000);
+	});
+
+})();
+</script>
+
+    
+  </body>
+</html>

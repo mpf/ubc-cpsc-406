@@ -1,0 +1,9 @@
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=179::parsing MPG ~ Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (~) i=2: MPG
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (~) i=3: Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=179::parsing Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=2: Disp
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=3: HP
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=195::  (+) i=4: WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=203::done: Disp + HP + WT
+::debug file=../../../.julia/packages/StatsModels/m1jYD/src/formula.jl,line=203::done: MPG ~ Disp + HP + WT

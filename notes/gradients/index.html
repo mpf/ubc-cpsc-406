@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="/ubc-cpsc-406/libs/katex/katex.min.css">
+     
+  
+     <link rel="stylesheet" href="/ubc-cpsc-406/libs/highlight/github.min.css">
+
+     <script src="/ubc-cpsc-406/libs/clipboard.min.js"></script>
+  
+    <link rel="stylesheet" href="/ubc-cpsc-406/css/jtd.css">
+  <link rel="icon" href="/ubc-cpsc-406/assets/favicon.ico">
+
+   <title>Gradients</title>  
+</head>
+<body>                      <!-- closed in foot.html -->
+<div class="page-wrap">   <!-- closed in foot.html -->
+  <!-- SIDE BAR -->
+  <div class="side-bar">
+    <div class="header">
+      <a href="/ubc-cpsc-406/" class="title">
+        CPSC 406 
+      </a>
+    </div>
+    <label for="show-menu" class="show-menu">MENU</label>
+    <input type="checkbox" id="show-menu" role="button">
+    <div class="menu" id="side-menu">
+      <ul class="menu-list">
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/" class="menu-list-link">Home</a>
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/grades/" class="menu-list-link">Grades</a>
+        <li class="menu-list-parent active"><a href="/ubc-cpsc-406/notes/" class="menu-list-link">Schedule</a>
+          <!-- <ul class="menu-list-child-list ">
+            <li class="menu-list-item {{ispage notes/least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/least-squares" class="menu-list-link">Least-squares</a>
+            <li class="menu-list-item {{ispage notes/qr-factorization}}active{{end}}"><a href="/ubc-cpsc-406/notes/qr-factorization" class="menu-list-link">QR</a>
+            <li class="menu-list-item {{ispage notes/regularized-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/regularized-least-squares" class="menu-list-link">Regularization</a>
+            <li class="menu-list-item {{ispage notes/gradients}}active{{end}}"><a href="/ubc-cpsc-406/notes/gradients" class="menu-list-link">Gradients</a>
+            <li class="menu-list-item {{ispage notes/nonlinear-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/nonlinear-least-squares" class="menu-list-link">Nonlinear least squares</a>
+          </ul>  -->
+      </ul>
+    </div>
+    <div class="footer">
+      <!-- This is <em>Just the docs</em>, adapted from the <a href="https://github.com/pmarsceill/just-the-docs" target="_blank">Jekyll theme</a>. -->
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="main-content-wrap"> <!-- closed in foot.html -->
+    <div class="main-content">    <!-- closed in foot.html -->
+      <div class="main-header">
+        <a name="pagetop"></a>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406/blob/main/notes/gradients.md">Page source</a>
+		    <span style="width:30px; text-align: center;color:lightgray;">|</span>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406">GitHub repo</a>
+      </div>
+
+
+
+<!-- Content appended here (in class franklin-content) -->
+<div class="franklin-content"><h1 id="gradients"><a href="#gradients" class="header-anchor">Gradients</a></h1>
+
+
+    <span style="font-size:24px;font-weight:300;">Gradients provide information on a function's sensitivity to perturbations in the input.</span>
+    
+<h2 id="directional_derivatives"><a href="#directional_derivatives" class="header-anchor">Directional derivatives</a></h2>
+<p>The behavior of a function \(f:\mathbb R^n\to\mathbb R\) along the ray \(\{x+αd\mid α\in\mathbb R_+\}\), where \(x\) and \(d\) are \(n\)-vectors, is given by the univariate function</p>
+<div class="nonumber">\[
+ \phi(\alpha) = f(x+αd).
+\]</div>
+<p>From standard calculus, the derivative of \(\phi\) at the origin, when it exists, is the limit</p>
+<div class="nonumber">\[
+  \phi'(0) = \lim_{α\to0^+}\frac{\phi(α)-\phi(0)}{α}.
+\]</div>
+<p>We thus arrive at the following definition. <div class="definition"><strong>Definition</strong>: &#40;<strong>directional derivative</strong>&#41;  The directional derivative of a function \(f:\mathbb R^n\to\mathbb R\) at a point \(x\in\mathbb R^n\), along a direction \(d\in\mathbb R^n\), is the limit <div class="nonumber">\[
+    f'(x;d) = \lim_{α\to0^+}\frac{f(x+αd)-f(x)}{α}.
+  \]</div></div></p>
+<p>It follows immediately from this definition that the partial derivatives of \(f\) are simply the directional derivatives of \(f\) along the each of the canonical unit direction \(e_1,\ldots,e_n\), i.e.,</p>
+<a id="eqpartial-derivative" class="anchor"></a>\[ 
+  \frac{\partial f}{\partial x_i}(x) \equiv f'(x;e_i). 
+\]
+<h3 id="descent_directions"><a href="#descent_directions" class="header-anchor">Descent directions</a></h3>
+<p>A nonzero vector \(d\) is a <strong>descent direction</strong> of \(f\) at \(x\) if the directional derivative is negative:</p>
+<a id="eqdescent-dir" class="anchor"></a>\[
+  f'(x;d) < 0.
+\]
+<p>It follows directly from the definition of the directional derivative that \(f(x+αd) < f(x)\) for all positive \(\alpha\) small enough.</p>
+<h2 id="gradient_vector"><a href="#gradient_vector" class="header-anchor">Gradient vector</a></h2>
+<p>The gradient of the function \(f\) is the collection of all the partial derivatives:</p>
+<div class="nonumber">\[
+  \nabla f(x) = \begin{bmatrix} \frac{\partial f}{\partial x_1}(x)
+	\\\vdots
+	\\\frac{\partial f}{\partial x_n}(x)\end{bmatrix}.
+\]</div>
+<p>The gradient and directional derivative are related via the formula</p>
+<div class="nonumber">\[
+  f'(x;d) = \nabla f(x)^T\! d.
+\]</div>
+<p>If, for example, the direction \(d\) to be the canonical unit direction \(e_i\), then this formula reduces to</p>
+<div class="nonumber">\[
+  f'(x;e_i) = \nabla f(x)^T\! e_i = [\nabla f(x))]_i = \frac{\partial f}{\partial x_i}(x),
+\]</div>
+<p>which confirms the identity <span class="eqref">(<a href="#eqpartial-derivative">1</a>)</span>.</p>
+<h3 id="linear_approximation"><a href="#linear_approximation" class="header-anchor">Linear approximation</a></h3>
+<p>The gradient of a continuously differentiable function \(f\) &#40;i.e., \(f\) is differentiable at all \(x\) and \(\nabla f\) is continuous&#41; provides a local linear approximation of \(f\) in the following sense:</p>
+<div class="nonumber">\[
+   f(x+d) = f(x) + \nabla f(x)^T\! d + \omicron(\| d\|),
+\]</div>
+<p>The residual \(\omicron:\mathbb R_+\to\mathbb R\) of the approximation decays faster than \(\| d\|\), i.e., </p>
+<div class="nonumber">\[\lim_{α\to0+}\omicron(α)/α=0.\]</div>
+<h3 id="example"><a href="#example" class="header-anchor">Example</a></h3>
+<p>Fortunately, there are <a href="https://juliadiff.org/">good computational</a> tools that automatically produce reliable gradients. Consider the 2-dimensional <a href="https://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a> and its gradient:</p>
+<div class="nonumber">\[\begin{aligned}
+     f(x)        &= (a - x_1)^2 + b(x_2 - x_1^2)^2
+  \\ \nabla f(x) &= \begin{bmatrix} -2(a-x_1)-4b(x_2-x_1^2)x_1 \\ 2b(x_2-x_1^2)\end{bmatrix}
+\end{aligned}\]</div>
+<p>Here is the code for \(f\) and its gradient:</p>
+<pre><code class="language-julia">a, b &#61; 1, 100
+f&#40;x&#41; &#61; &#40;a - x&#91;1&#93;&#41;^2 &#43; b*&#40;x&#91;2&#93; - x&#91;1&#93;^2&#41;^2
+∇f&#40;x&#41; &#61; &#91;-2&#40;a - x&#91;1&#93;&#41; - 4b*&#40;x&#91;2&#93; - x&#91;1&#93;^2&#41;*x&#91;1&#93; , 2b*&#40;x&#91;2&#93; - x&#91;1&#93;^2&#41; &#93;</code></pre>
+<p>Instead of computing gradients by hand, as we did above, we can use <a href="https://duckduckgo.com/?t&#61;ffab&amp;q&#61;automatic&#43;differentiation&amp;atb&#61;v274-1&amp;ia&#61;web">automatic differentiation</a>, such as implemented in the package <a href="https://github.com/JuliaDiff/ForwardDiff.jl">ForwardDiff</a>, to compute these.</p>
+<pre><code class="language-julia">using ForwardDiff
+∇fad&#40;x&#41; &#61; ForwardDiff.gradient&#40;f, x&#41;</code></pre>
+<p>The function <code>∇fad</code> returns the value of the gradient at <code>x</code>. Let&#39;s compare the hand-computed gradient <code>∇f</code> against that automatically-computed gradient <code>∇fad</code> at a random point:</p>
+<pre><code class="language-julia">x &#61; rand&#40;2&#41; 
+∇f&#40;x&#41; &#61;&#61; ∇fad&#40;x&#41;</code></pre><pre><code class="plaintext code-output">true</code></pre>
+<h2 id="calculus_rules"><a href="#calculus_rules" class="header-anchor">Calculus rules</a></h2>
+<p>We derive calculus rules for linear and quadratic functions, which appear often in optimization.</p>
+<h3 id="linear_functions"><a href="#linear_functions" class="header-anchor">Linear functions</a></h3>
+<p>Let \(a\in\mathbb R^n\). The linear function</p>
+<div class="nonumber">\[
+  f(x) = a^T\! x = \sum_i^n a_i x_i
+\]</div>
+<p>has the gradient \(\nabla f(x) = a\), and so the gradient is constant. Here&#39;s a small example:</p>
+<pre><code class="language-julia">a &#61; collect&#40;1:5&#41;
+ForwardDiff.gradient&#40;x-&gt;a&#39;x, rand&#40;5&#41;&#41;</code></pre>
+<h3 id="quadratic_functions"><a href="#quadratic_functions" class="header-anchor">Quadratic functions</a></h3>
+<p>Let \(A\in\mathbb R^{n\times n}\) be a square matrix. Consider the quadratic function</p>
+<a id="eqquadratic-fn" class="anchor"></a>\[
+  f(x) = \tfrac12 x^T\! A x.
+\]
+<p>One way to derive the gradient of this function is to write out the quadratic function making explicit all of the coefficients in \(A\). Here&#39;s another approach that uses the product rule:</p>
+<div class="nonumber">\[\begin{aligned}
+    ∇f(x) = \tfrac12 ∇(x^T\! a) + \tfrac12 ∇(b^T\! x),
+\end{aligned}\]</div>
+<p>where \(a = Ax\) and \(b:=A^T\! x\) are held fixed when applying the gradient. Because each of the functions in the right-hand side of this sum is a linear function, we can apply the calculus rule for linear functions to deduce that</p>
+<div class="nonumber">\[
+  ∇f(x) = \tfrac12 Ax + \tfrac12 A^T\! x = \tfrac12 (A+A^T\!)x.
+\]</div>
+<p>&#40;Recall that \(A\) is square.&#41; The matrix \(\tfrac12(A+A^T\!)\) is the <em>symmetric part</em> of \(A\). If \(A\) is symmetric, i.e., \(A = A^T\!\), then the gradient reduces to </p>
+<div class="nonumber">\[
+  ∇f(x) = Ax.
+\]</div>
+<p>But in optimization, we almost always assume that the matrix that defines the quadratic in <span class="eqref">(<a href="#eqquadratic-fn">3</a>)</span> is symmetric because always \(x^T\! Ax = \tfrac12 x^T\!(A+A^T\!)x\), and therefore we can instead work with the symmetric part of \(A\).</p>
+<p><strong>Example</strong> &#40;2-norm&#41;. Consider the two functions</p>
+<div class="nonumber">\[
+f_1(x) = \| x\|_2 \quad\text{and}\quad f_2(x) = \tfrac12\| x\|_2^2.
+\]</div>
+<p>The function \(f_2\) is of the form <span class="eqref">(<a href="#eqquadratic-fn">3</a>)</span> with \(A=I\), and so \(\nabla f_2(x) = x\). Use the chain rule to obtain the gradient of the \(f_1\):</p>
+<div class="nonumber">\[
+  \nabla f_1(x) = \nabla (x^T\! x)^\tfrac12 = \tfrac12 (x^T\! x)^{-\tfrac12}\nabla (x^T\! x) = \frac{x}{\| x\|_2},
+\]</div>
+<p>which isn&#39;t differentiable at the origin.</p>
+<h2 id="visualizing_gradients"><a href="#visualizing_gradients" class="header-anchor">Visualizing gradients</a></h2>
+<p>Gradients can be understood geometrically in relation to the level-set of the function. The \(α\)-level set of a function \(f:\mathbb R^n\to\mathbb R\) is the set of points that have an equal or lower value at \(x\):</p>
+<div class="nonumber">\[
+  [f≤α] = \{x\in\mathbb R^n\mid f(x)≤α\}.
+\]</div>
+<p>Fix any \(x\) and consider the level set \([f≤f(x)]\). For any direction \(d\) that&#39;s either a descent direction for \(f\) or a tangent direction for \([f≤f(x)]\),</p>
+<div class="nonumber">\[
+   f'(x;d) = ∇f(x)^T\! d ≤ 0,
+\]</div>
+<p>which implies that the gradient \(\nabla f(x)\) is the outward normal to the level set.</p>
+<img src="/ubc-cpsc-406/assets/notes/gradients/gradient-normal.svg" alt="">
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Michael P. Friedlander | Last modified: April 20, 2022.
+  </br> Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div> <!-- end of class main-content -->
+    </div> <!-- end of class main-content-wrap -->
+    </div> <!-- end of class page-wrap-->
+    
+      <script src="/ubc-cpsc-406/libs/katex/katex.min.js"></script>
+<script src="/ubc-cpsc-406/libs/katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body)</script>
+
+    
+    
+      <script src="/ubc-cpsc-406/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+      <!-- http://tutsplus.github.io/clipboard/ -->
+
+<script>
+(function(){
+
+	// Get the elements.
+	// - the 'pre' element.
+	// - the 'div' with the 'paste-content' id.
+
+	var pre = document.getElementsByTagName('pre');
+
+	// Add a copy button in the 'pre' element.
+	// which only has the className of 'language-'.
+
+	for (var i = 0; i < pre.length; i++) {
+		var isLanguage = pre[i].children[0].className.indexOf('language-');
+
+		if ( isLanguage === 0 ) {
+			var button           = document.createElement('button');
+					button.className = 'copy-button';
+					button.textContent = 'Copy';
+
+					pre[i].appendChild(button);
+		}
+	};
+
+	// Run Clipboard
+
+	var copyCode = new Clipboard('.copy-button', {
+		target: function(trigger) {
+			return trigger.previousElementSibling;
+    }
+	});
+
+	// On success:
+	// - Change the "Copy" text to "Copied".
+	// - Swap it to "Copy" in 2s.
+	// - Lead user to the "contenteditable" area with Velocity scroll.
+
+	copyCode.on('success', function(event) {
+		event.clearSelection();
+		event.trigger.textContent = 'Copied';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 2000);
+
+	});
+
+	// On error (Safari):
+	// - Change the  "Press Ctrl+C to copy"
+	// - Swap it to "Copy" in 2s.
+
+	copyCode.on('error', function(event) {
+		event.trigger.textContent = 'Press "Ctrl + C" to copy';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 5000);
+	});
+
+})();
+</script>
+
+    
+  </body>
+</html>

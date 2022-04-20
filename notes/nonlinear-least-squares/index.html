@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="/ubc-cpsc-406/libs/katex/katex.min.css">
+     
+  
+     <link rel="stylesheet" href="/ubc-cpsc-406/libs/highlight/github.min.css">
+
+     <script src="/ubc-cpsc-406/libs/clipboard.min.js"></script>
+  
+    <link rel="stylesheet" href="/ubc-cpsc-406/css/jtd.css">
+  <link rel="icon" href="/ubc-cpsc-406/assets/favicon.ico">
+
+   <title>Nonlinear Least-Squares</title>  
+</head>
+<body>                      <!-- closed in foot.html -->
+<div class="page-wrap">   <!-- closed in foot.html -->
+  <!-- SIDE BAR -->
+  <div class="side-bar">
+    <div class="header">
+      <a href="/ubc-cpsc-406/" class="title">
+        CPSC 406 
+      </a>
+    </div>
+    <label for="show-menu" class="show-menu">MENU</label>
+    <input type="checkbox" id="show-menu" role="button">
+    <div class="menu" id="side-menu">
+      <ul class="menu-list">
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/" class="menu-list-link">Home</a>
+        <li class="menu-list-parent "><a href="/ubc-cpsc-406/grades/" class="menu-list-link">Grades</a>
+        <li class="menu-list-parent active"><a href="/ubc-cpsc-406/notes/" class="menu-list-link">Schedule</a>
+          <!-- <ul class="menu-list-child-list ">
+            <li class="menu-list-item {{ispage notes/least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/least-squares" class="menu-list-link">Least-squares</a>
+            <li class="menu-list-item {{ispage notes/qr-factorization}}active{{end}}"><a href="/ubc-cpsc-406/notes/qr-factorization" class="menu-list-link">QR</a>
+            <li class="menu-list-item {{ispage notes/regularized-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/regularized-least-squares" class="menu-list-link">Regularization</a>
+            <li class="menu-list-item {{ispage notes/gradients}}active{{end}}"><a href="/ubc-cpsc-406/notes/gradients" class="menu-list-link">Gradients</a>
+            <li class="menu-list-item {{ispage notes/nonlinear-least-squares}}active{{end}}"><a href="/ubc-cpsc-406/notes/nonlinear-least-squares" class="menu-list-link">Nonlinear least squares</a>
+          </ul>  -->
+      </ul>
+    </div>
+    <div class="footer">
+      <!-- This is <em>Just the docs</em>, adapted from the <a href="https://github.com/pmarsceill/just-the-docs" target="_blank">Jekyll theme</a>. -->
+    </div>
+  </div>
+  <!-- CONTENT -->
+  <div class="main-content-wrap"> <!-- closed in foot.html -->
+    <div class="main-content">    <!-- closed in foot.html -->
+      <div class="main-header">
+        <a name="pagetop"></a>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406/blob/main/notes/nonlinear-least-squares.md">Page source</a>
+		    <span style="width:30px; text-align: center;color:lightgray;">|</span>
+        <a id="github" href="https://github.com/mpf/ubc-cpsc-406">GitHub repo</a>
+      </div>
+
+
+
+<!-- Content appended here (in class franklin-content) -->
+<div class="franklin-content"><h1 id="nonlinear_least-squares"><a href="#nonlinear_least-squares" class="header-anchor">Nonlinear Least-Squares</a></h1>
+
+
+    <span style="font-size:24px;font-weight:300;">The nonlinear least-squares problem generalizes the linear least-squares problem to include nonlinear residual functions. The Gauss-Newton solves this problem as a sequence of least-squares subproblems.</span>
+    
+<h2 id="nonlinear_residuals"><a href="#nonlinear_residuals" class="header-anchor">Nonlinear residuals</a></h2>
+<p>The nonlinear least squares problem seeks to minimize the sum of squares</p>
+<a id="eqnonlinear-ls" class="anchor"></a>\[
+  \min_{x\in\mathbb R^n}\ \tfrac12\|r(x)\|^2,
+\]
+<p>where the \(m\)-vector of residuals</p>
+<div class="nonumber">\[
+  r(x)=\begin{bmatrix} r_1(x)\\\vdots\\r_m(x)\end{bmatrix}
+\]</div>
+<p>is composed of differentiable nonlinear functions \(r_{i}:\mathbb R^n→\mathbb R\). The non-linear least squares problem reduces to linear least-squares when \(r\) is affine, i.e., \(r(x) = Ax-b\) for some \(m\)-by-\(n\) matrix \(A\) and \(m\)-vector of observations \(b\).</p>
+<h2 id="linearizing_the_residual"><a href="#linearizing_the_residual" class="header-anchor">Linearizing the residual</a></h2>
+<p>We can solve non-linear least squares problem <span class="eqref">(<a href="#eqnonlinear-ls">1</a>)</span> by solving a sequence of linear least-squares problem, which result from linearization of \(r\) at the current estimate of the ground truth \(x\). </p>
+<p>The linear approximation of \(r\) at a point \(x^k \in \mathbb R^n\) is defined by</p>
+<div class="nonumber">\[\begin{aligned}
+r^k(d) 
+    &:= \begin{bmatrix} r_1(x^k)+\nabla r_1(x^k)^T\! d \\ \vdots \\ r_m(x^k)+\nabla r_m(x^k)^T\! d\end{bmatrix}
+\\  &= r(x^k) + J(x^k)d 
+\end{aligned}\]</div>
+<p>where</p>
+\[
+J(x)
+= \begin{bmatrix} \nabla r_1(x)^T\\ \vdots \\ \nabla r_m(x)^T\end{bmatrix}
+\]
+<p>is the Jacobian of \(r\) evaluated at \(x\)</p>
+<p><div class="theorem"><p><strong>Algorithm</strong>: &#40;<em>Gauss-Newton method</em>&#41; <br/> Choose a starting \(x^{(0)}\)<br/> for \(k=0,1,2,\ldots\)</p>
+<ol>
+<li><p>linearize \(r\) at \(x^{k}\) to define \(r^k(d):=r(x^k)+J(x^k)d\)</p>
+</li>
+<li><p>solve linear least-squares problem <div class="nonumber">\[
+     d^k = \argmin_d\ \tfrac12\| r^k(d)\|^2
+   \]</div> </p>
+</li>
+<li><p>update iterate: \(x^{k+1} = x^k + αd^k\) for some \(α∈(0,1]\)</p>
+</li>
+</ol></div> If the linesearch parameter \(\alpha\) is held fixed at 1, then this is a &quot;pure&quot; Gauss-Newton iteration. We&#39;ll later discuss options for when it&#39;s advisable to use smaller steps.</p>
+<p>Here&#39;s a basic version of the method that takes as arguments the residual and Jacobian functions <code>r</code> and <code>J</code>, and a starting vector <code>x</code>.</p>
+<pre><code class="language-julia">function gauss_newton&#40;r, J, x; ε&#61;1e-4, maxits&#61;30&#41;
+	err &#61; &#91;&#93;
+	for i &#61; 1:maxits
+        rk, Jk &#61; r&#40;x&#41;, J&#40;x&#41;
+	    push&#33;&#40;err, norm&#40;Jk&#39;rk&#41;&#41;
+	    err&#91;end&#93; ≤ ε &amp;&amp; break
+        x &#61; x - Jk\rk 
+    end
+    return x, err
+end</code></pre>
+<p>The condition <code>err&#91;end&#93; ≤ ε</code> causes the iterations to terminate when the latest residual <code>rk</code> is nearly orthogonal to all the gradients of the residual, i.e., the residual is orthogonal to the tangent space of the level-set for the nonlinear least-squares objective \(\tfrac12\|r(x)\|^2\). This is exactly analogous to the optimality condition for linear least-squares.</p>
+<h2 id="example_position_estimation_from_ranges"><a href="#example_position_estimation_from_ranges" class="header-anchor">Example: Position estimation from ranges</a></h2>
+<img src="/ubc-cpsc-406/assets/notes/nonlinear-least-squares/position-distances.svg" alt="">
+<p>Let \(x \in \mathbb R^2\) represent the unknown position of an object. Our aim is to find the position of this object relative to a set of \(m\) beacons placed in fixed known positions \(b_{i} \in \mathbb R^2\), \(i = 1,\dots,m\). The only data available are range measurements \(δ_i\) that give an estimate of the distance between each beacon \(b_{i}\) and the object at \(x\), i.e.,</p>
+\[
+δ_i := \| x-b_i\| + ν_i
+\]
+<p>where each scalar \(ν_i\) represents the error between the true &#40;and unkown&#41; distance \(\| x-b_i\|\) and the measurement \(δ_i\).</p>
+<p>We can obtain an estimate of the object&#39;s position \(x\) by solving the nonlinear least-squares problem <span class="eqref">(<a href="#eqnonlinear-ls">1</a>)</span> where we define the \(i\)th residual between the reported distance \(δ_i\) and the distance between the position \(b_i\) of the \(i\)th beacon and \(x\):</p>
+<div class="nonumber">\[
+  r_i(x) := δ_{i} - \|x-b_i\|.
+\]</div>
+<p>Here&#39;s the residual function, which takes a vector of ranges \(δ\) and a vector of positions <code>b</code>:</p>
+<pre><code class="language-julia">r&#40;x, δ, b&#41; &#61; &#91; δ&#91;i&#93; - norm&#40;x - b&#91;:,i&#93;&#41; for i in 1:length&#40;δ&#41; &#93;</code></pre>
+<p>The following Julia packages for this example.</p>
+<pre><code class="language-julia">using Random
+using Statistics
+using LinearAlgebra
+using ForwardDiff
+using Plots</code></pre>
+<p>We simulate data by placing <code>m</code> beacons in random locations:</p>
+<pre><code class="language-julia">m &#61; 13                 # number of beacons
+b &#61; 2rand&#40;2, m&#41; .- 1   # place beacons uniformly in the unit box 
+x &#61; zeros&#40;2&#41;           # true position 
+x0 &#61; 2rand&#40;2&#41; .- 1     # initial guess of the unknown position
+ν &#61; .5*rand&#40;m&#41;
+δ &#61; &#91; norm&#40;x - b&#91;:,i&#93;&#41; &#43; ν&#91;i&#93; for i in 1:m&#93;</code></pre>
+<p>Place these items on a map &#40;we&#39;ll wrap this in a function so that we can reuse it below&#41;:</p>
+<pre><code class="language-julia">function plotmap&#40;b, x, x0&#41;
+scatter&#40;xlim&#61;&#40;-1,&#43;1&#41;, ylim&#61;&#40;-1,&#43;1&#41;, leg&#61;:outertopright,frame&#61;:box, aspect_ratio&#61;:equal&#41;
+scatter&#33;&#40;b&#91;1,:&#93;, b&#91;2,:&#93;, label&#61;&quot;beacons&quot;, shape&#61;:square, ms&#61;7&#41;
+scatter&#33;&#40;x&#91;1,:&#93;, x&#91;2,:&#93;, label&#61;&quot;true position&quot;, shape&#61;:xcross, ms&#61;7&#41;
+scatter&#33;&#40;x0&#91;1,:&#93;, x0&#91;2,:&#93;, label&#61;&quot;initial guess&quot;, c&#61;&quot;yellow&quot;, ms&#61;7&#41;
+end
+plotmap&#40;b, x, x0&#41;</code></pre>
+<img src="/ubc-cpsc-406/assets/notes/nonlinear-least-squares/code/output/map.png" alt="">
+<pre><code class="language-julia">J&#40;x&#41; &#61; ForwardDiff.jacobian&#40;x-&gt;r&#40;x, δ, b&#41;, x&#41;
+xs, err &#61; gauss_newton&#40;x-&gt;r&#40;x, δ, b&#41;, J, x0&#41;
+plot&#40;err, yaxis&#61;:log&#41;</code></pre>
+<img src="/ubc-cpsc-406/assets/notes/nonlinear-least-squares/code/output/convergence.png" alt="">
+<p>Plot the original map and overlay the obtained solution:</p>
+<pre><code class="language-julia">plotmap&#40;b, x, x0&#41;
+scatter&#33;&#40;xs&#91;1,:&#93;, xs&#91;2,:&#93;, label&#61;&quot;solution&quot;, shape&#61;:star7, c&#61;&quot;green&quot;, ms&#61;7&#41;</code></pre>
+<img src="/ubc-cpsc-406/assets/notes/nonlinear-least-squares/code/output/map-soln.png" alt="">
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Michael P. Friedlander | Last modified: April 20, 2022.
+  </br> Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a> and the <a href="https://julialang.org">Julia programming language</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div> <!-- end of class main-content -->
+    </div> <!-- end of class main-content-wrap -->
+    </div> <!-- end of class page-wrap-->
+    
+      <script src="/ubc-cpsc-406/libs/katex/katex.min.js"></script>
+<script src="/ubc-cpsc-406/libs/katex/auto-render.min.js"></script>
+<script>renderMathInElement(document.body)</script>
+
+    
+    
+      <script src="/ubc-cpsc-406/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+      <!-- http://tutsplus.github.io/clipboard/ -->
+
+<script>
+(function(){
+
+	// Get the elements.
+	// - the 'pre' element.
+	// - the 'div' with the 'paste-content' id.
+
+	var pre = document.getElementsByTagName('pre');
+
+	// Add a copy button in the 'pre' element.
+	// which only has the className of 'language-'.
+
+	for (var i = 0; i < pre.length; i++) {
+		var isLanguage = pre[i].children[0].className.indexOf('language-');
+
+		if ( isLanguage === 0 ) {
+			var button           = document.createElement('button');
+					button.className = 'copy-button';
+					button.textContent = 'Copy';
+
+					pre[i].appendChild(button);
+		}
+	};
+
+	// Run Clipboard
+
+	var copyCode = new Clipboard('.copy-button', {
+		target: function(trigger) {
+			return trigger.previousElementSibling;
+    }
+	});
+
+	// On success:
+	// - Change the "Copy" text to "Copied".
+	// - Swap it to "Copy" in 2s.
+	// - Lead user to the "contenteditable" area with Velocity scroll.
+
+	copyCode.on('success', function(event) {
+		event.clearSelection();
+		event.trigger.textContent = 'Copied';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 2000);
+
+	});
+
+	// On error (Safari):
+	// - Change the  "Press Ctrl+C to copy"
+	// - Swap it to "Copy" in 2s.
+
+	copyCode.on('error', function(event) {
+		event.trigger.textContent = 'Press "Ctrl + C" to copy';
+		window.setTimeout(function() {
+			event.trigger.textContent = 'Copy';
+		}, 5000);
+	});
+
+})();
+</script>
+
+    
+  </body>
+</html>
